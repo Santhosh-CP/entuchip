@@ -2,6 +2,9 @@
 #ifndef CHIP8
 #define CHIP8
 
+#include<iostream>
+#include<fstream>
+
 /*
 Task to be implemented
 
@@ -10,19 +13,21 @@ fontset - where to get it?
 
 using namespace std;
 
-class Chip8 {
+class Entu {
+private:
 	unsigned short Opcode; // Stores the current opcode
 	unsigned char Memory[4096]; // Stores the 4K memory
 	unsigned char v[16]; // General purpose registers v0 to vE
 	unsigned short I; // Index Register
 	unsigned short PC; // Program Counter
-	unsigned char Graphics[64 * 32]; // Graphics
+
 	unsigned char DelayTimer;
 	unsigned char SoundTimer;
+
 	unsigned short Stack[16]; // Stack with 16 Levels
 	unsigned short StackPointer;
-	unsigned char Key[16]; // 0 to F
-	unsigned char FontSet[80] = 
+
+	unsigned char FontSet[80] =
 	{
 	  0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
 	  0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -41,18 +46,25 @@ class Chip8 {
 	  0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
 	  0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 	};
-	bool drawFlag;
 
 	//functions
 	void initialize(); // Initializes the System
-	void cycle();
+
 	unsigned short getOpcode(unsigned char, unsigned char);
 	unsigned char getX();
 	unsigned char getY();
 	unsigned char getKK();
+
+public:
+	unsigned char Graphics[64 * 32]; // Graphics
+	unsigned char Key[16]; // 0 to F
+	bool drawFlag;
+
+	void cycle();
+	bool load(const char* filename);
 };
 
-void Chip8::initialize() {
+void Entu::initialize() {
 	PC = 0x200; //PC starts at 0x200
 
 	//resetting the registers
@@ -65,6 +77,7 @@ void Chip8::initialize() {
 	fill(begin(v), end(v), 0);
 	fill(begin(Graphics), end(Graphics), 0);
 	fill(begin(Stack), end(Stack), 0);
+	fill(begin(Key), end(Key), 0);
 
 	//resetting the timers
 	DelayTimer = 0;
@@ -77,7 +90,52 @@ void Chip8::initialize() {
 	}
 }
 
-void Chip8::cycle() {
+bool Entu::load(const char* filename) {
+	initialize();
+
+	FILE* file = fopen(filename, "rb");
+	if (file == NULL) {
+		printf("ROM file does not exist or incorrect filename\n");
+		return false;
+	}
+
+	long romSize;
+
+	fseek(file, 0, SEEK_END);
+	romSize = ftell(file);
+	rewind(file);
+
+	char* romData = (char*)malloc(sizeof(char) * romSize);
+	if (romData == NULL) {
+		printf("Failure to load the rom data\n");
+		return false;
+	}
+
+	size_t rom = fread(romData, sizeof(char), (size_t)romSize, file);
+
+	int offset = 512;
+	int max = 4096;
+
+	if ((max - offset) > romSize) {
+		//Rom can be loaded
+
+		for (int i = 0; i < romSize; i++) {
+			Memory[offset + i] = (unsigned char)romData[i];
+		}
+	}
+	else {
+		printf("ROM size is larger than the available memory. Unable to load the ROM file");
+		return false;
+	}
+
+	fclose(file);
+	free(romData);
+
+	return true;
+}
+
+
+void Entu::cycle() {
 	//Obtaining the opcode
 	Opcode = getOpcode(Memory[PC], Memory[PC + 1]);
 
@@ -91,6 +149,7 @@ void Chip8::cycle() {
 		So when we perform the Bitwise AND operation on the Opcode, we eliminate the last 12 bits and keep only the first 4 bits
 		The comparison is done based on the first 4 bits
 		*/
+		//verified
 	case 0x0000: {
 		unsigned short last;
 
@@ -99,38 +158,38 @@ void Chip8::cycle() {
 			//00E0 - cls
 			//Clears the screen
 			fill(begin(Graphics), end(Graphics), 0);
-			fill(begin(Graphics), end(Graphics), 0);
+			drawFlag = true;
 			PC = PC + 2;
 		}
 		else if (last == 0x00EE) {
 			//00EE - RET
 			//Return from a subroutine
-			PC = Stack[StackPointer];
 			StackPointer--;
+			PC = Stack[StackPointer];
+			PC = PC + 2;
 		}
 		else {
 			cout << "\nUnsupported 0x0000 series Opcode\n";
 		}
 		break;
 	}
-
+			   //verified
 	case 0x1000: {
 		//1nnn - JP addr
 		//Jump to location nnn.
 		PC = Opcode & 0x0FFF;
 		break;
 	}
-
+			   //verified
 	case 0x2000: {
 		//2nnn - CALL addr
 		//Call subroutine at nnn.
-		StackPointer++;
 		Stack[StackPointer] = PC;
+		StackPointer++;
 		PC = Opcode & 0x0FFF;
 		break;
 	}
-
-			   // Might be wrong
+			   //verified
 	case 0x3000: {
 		//3xkk - SE Vx, byte
 		//Skip next instruction if Vx = kk.
@@ -140,11 +199,10 @@ void Chip8::cycle() {
 		if (v[x] == kk) {
 			PC = PC + 2;
 		}
-		//Shouldn't here be a pc+2?
+		PC = PC + 2;
 		break;
 	}
-
-			   //Might be wrong
+			   //verified
 	case 0x4000: {
 		//4xkk - SNE Vx, byte
 		//Skip next instruction if Vx != kk.
@@ -154,11 +212,10 @@ void Chip8::cycle() {
 		if (v[x] != kk) {
 			PC = PC + 2;
 		}
-		//Shouldn't here be a pc+2?
+		PC = PC + 2;
 		break;
 	}
-
-			   //Might be wrong
+			   //verified
 	case 0x5000: {
 		//5xy0 - SE Vx, Vy
 		//Skip next instruction if Vx = Vy.
@@ -168,9 +225,10 @@ void Chip8::cycle() {
 		if (v[x] == v[y]) {
 			PC = PC + 2;
 		}
+		PC = PC + 2;
 		break;
 	}
-
+			   //verified
 	case 0x6000: {
 		//6xkk - LD Vx, byte
 		//Set Vx = kk.
@@ -181,7 +239,7 @@ void Chip8::cycle() {
 		PC = PC + 2;
 		break;
 	}
-
+			   //verified
 	case 0x7000: {
 		//7xkk - ADD Vx, byte
 		//Set Vx = Vx + kk.
@@ -192,7 +250,7 @@ void Chip8::cycle() {
 		PC = PC + 2;
 		break;
 	}
-
+			   //verified
 	case 0x8000: {
 		//There are multiple opcodes which start with 8
 		//They are differentiated based on the last 4 bits
@@ -233,11 +291,15 @@ void Chip8::cycle() {
 			  //8xy4 - ADD Vx, Vy
 			  //Set Vx = Vx + Vy, set VF = carry.
 		case 4: {
-			unsigned short sum;
+			unsigned char sum;
 			sum = v[x] + v[y];
 			if (sum > 255) {
-				v[15] = 1;
+				v[0xF] = 1;
 				sum = sum & 0x00FF;
+				v[x] = sum;
+			}
+			else {
+				v[0xF] = 0;
 				v[x] = sum;
 			}
 			break;
@@ -247,16 +309,15 @@ void Chip8::cycle() {
 				//Set Vx = Vx - Vy, set VF = NOT borrow.
 		case 5: {
 			if (v[x] > v[y]) {
-				v[15] = 1;
+				v[0xF] = 1;
 			}
 			else {
-				v[15] = 0;
+				v[0xF] = 0;
 			}
 			v[x] = v[x] - v[y];
 			break;
 		}
 
-			  //TEST
 			  //8xy6 - SHR Vx {, Vy}
 			  //Set Vx = Vx SHR 1.
 		case 6: {
@@ -264,10 +325,10 @@ void Chip8::cycle() {
 			end = v[x] & 0x0F;
 			end = end & 0b0001;
 			if (end == 1) {
-				v[15] = 1;
+				v[0xF] = 1;
 			}
 			else {
-				v[15] = 0;
+				v[0xF] = 0;
 			}
 			v[x] = v[x] >> 1;
 			break;
@@ -277,10 +338,10 @@ void Chip8::cycle() {
 			  //Set Vx = Vy - Vx, set VF = NOT borrow.
 		case 7: {
 			if (v[y] > v[x]) {
-				v[15] = 1;
+				v[0xF] = 1;
 			}
 			else {
-				v[15] = 0;
+				v[0xF] = 0;
 			}
 			v[x] = v[y] - v[x];
 			break;
@@ -293,10 +354,10 @@ void Chip8::cycle() {
 			start = v[x] & 0xF0;
 			start = start >> 7; // Only the MSB is remaining
 			if (start == 1) {
-				v[15] = 1;
+				v[0xF] = 1;
 			}
 			else {
-				v[15] = 0;
+				v[0xF] = 0;
 			}
 			v[x] = v[x] << 1;
 			break;
@@ -310,7 +371,7 @@ void Chip8::cycle() {
 		PC = PC + 2;
 		break;
 	}
-
+			   //verified
 	case 0x9000: {
 		//9xy0 - SNE Vx, Vy
 		//Skip next instruction if Vx != Vy.
@@ -320,9 +381,10 @@ void Chip8::cycle() {
 		if (v[x] != v[y]) {
 			PC = PC + 2;
 		}
+		PC = PC + 2;
 		break;
 	}
-
+			   //verified
 	case 0xA000: {
 		//Annn - LD I, addr
 		//Set I = nnn.
@@ -330,26 +392,29 @@ void Chip8::cycle() {
 		PC = PC + 2;
 		break;
 	}
-
+			   //verified
 	case 0xB000: {
 		//Bnnn - JP V0, addr
 		//Jump to location nnn + V0.
-		PC = Opcode & 0x0FFF;
-		PC = PC + v[0];
+		PC = (Opcode & 0x0FFF) + v[0];
 		break;
 	}
-
+			   //verified
 	case 0xC000: {
 		//Cxkk - RND Vx, byte
 		//Set Vx = random byte AND kk.
 		unsigned char max, rand_byte;
+		unsigned short x, kk;
 
-		max = 256;
-		rand_byte = rand() % max; //Generates a random number between 0 to 255
+		max = 255;
+		rand_byte = rand() % (max + 1); //Generates a random number between 0 to 255
+		kk = getKK();
+		x = getX();
+		v[x] = rand_byte & kk;
+		PC = PC + 2;
 		break;
 	}
-
-
+			   //verified
 	case 0xD000: {
 		//Dxyn - DRW Vx, Vy, nibble
 		//Display n - byte sprite starting at memory location I at(Vx, Vy), set VF = collision.
@@ -380,8 +445,7 @@ void Chip8::cycle() {
 
 		break;
 	}
-
-
+			   //verified
 	case 0xE000: {
 		unsigned short last;
 		unsigned char x;
@@ -415,8 +479,7 @@ void Chip8::cycle() {
 		}
 		break;
 	}
-
-			   //NOT FULLY IMPLEMENTED
+			   //verified
 	case 0xF000: {
 		unsigned short last;
 		unsigned char x;
@@ -431,11 +494,23 @@ void Chip8::cycle() {
 			break;
 		}
 
-				   //NOT IMPLEMENTED. NEEDS keypress check function
 		case 0x000A: {
 			//Fx0A - LD Vx, K
 			//Wait for a key press, store the value of the key in Vx.
 
+			bool key_press = false;
+
+			for (int i = 0; i < 16; i++) {
+				if (Key[i] != 0) {
+					v[x] = i;
+					key_press = true;
+				}
+			}
+
+			if (!key_press) {
+				//Incase of no keypress, it returns and tries again
+				return;
+			}
 		}
 
 		case 0x0015: {
@@ -455,13 +530,21 @@ void Chip8::cycle() {
 		case 0x001E: {
 			//Fx1E - ADD I, Vx
 			//Set I = I + Vx.
+			if (I + v[x] > 0xFFF) {
+				v[0xF] = 1;
+			}
+			else {
+				v[0xF] = 0;
+			}
 			I = I + v[x];
 			break;
 		}
-				   //NOT IMPLEMENTED. NEEDS sprite loading
+
 		case 0x0029: {
 			//Fx29 - LD F, Vx
 			//Set I = location of sprite for digit Vx.
+
+			I = v[x] * 0x5;
 			break;
 		}
 
@@ -495,6 +578,7 @@ void Chip8::cycle() {
 			for (int i = 0; i <= x; i++) {
 				Memory[I + i] = v[i];
 			}
+			I = x + I + 1;
 			break;
 		}
 
@@ -504,34 +588,55 @@ void Chip8::cycle() {
 			for (int i = 0; i <= x; i++) {
 				v[i] = Memory[I + i];
 			}
+			I = x + I + 1;
 			break;
 		}
+
+		default: {
+			printf("Unknown Opcode [0x0F00] : 0x%x\n", Opcode);
+		}
+
 		}
 		PC = PC + 2;
 	}
+
+	default: {
+		printf("Unknown Opcode : 0x%X\n", Opcode);
+	}
+	}
+
+	if (DelayTimer > 0) {
+		DelayTimer--;
+	}
+
+	if (SoundTimer > 0) {
+		if (SoundTimer == 1) {
+			//Implement sound code
+		}
+
+		SoundTimer--;
 	}
 }
-unsigned char Chip8::getX() {
+unsigned char Entu::getX() {
 	/*
 	In all Chip 8 Opcode, if X exists, it is in bits 5-8
 	That is, 0x0X00
 	This function obtains the X value and returns it.
 	*/
-	unsigned short x;
+	unsigned char x;
 	unsigned char ret_x;
 
-	x = Opcode & 0x0F00;
-	x = x >> 8;
+	x = (Opcode & 0x0F00) >> 8;
 	ret_x = x;
 	return ret_x;
 }
-unsigned char Chip8::getY() {
+unsigned char Entu::getY() {
 	/*
 	In all Chip 8 Opcode, if X exists, it is in bits 9-12
 	That is, 0x00Y0
 	This function obtains the Y value and returns it.
 	*/
-	unsigned short y;
+	unsigned char y;
 	unsigned char ret_y;
 
 	y = Opcode & 0x00F0;
@@ -539,20 +644,20 @@ unsigned char Chip8::getY() {
 	ret_y = y;
 	return ret_y;
 }
-unsigned char Chip8::getKK() {
+unsigned char Entu::getKK() {
 	/*
 	In all Chip 8 Opcode, if KK exists, it is in the second byte
 	That is, 0x00KK
 	This function obtains the K value and returns it.
 	*/
-	unsigned short kk;
+	unsigned char kk;
 	unsigned char ret_kk;
 
 	kk = Opcode & 0x00FF;
 	ret_kk = kk;
 	return ret_kk;
 }
-unsigned short Chip8::getOpcode(unsigned char a, unsigned char b) {
+unsigned short Entu::getOpcode(unsigned char a, unsigned char b) {
 	/*
 	Memory in Chip 8 is one byte
 	But opcodes are two bytes

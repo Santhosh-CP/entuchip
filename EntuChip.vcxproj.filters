@@ -20,7 +20,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="chip8.h">
+    <ClInclude Include="Entu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
