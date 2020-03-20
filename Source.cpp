@@ -1,45 +1,21 @@
 #include<iostream>
 #include<string>
+#include<filesystem>
 #include "entu.h"
 #include "GL/freeglut.h"
 
 using namespace std;
 
-//Original Chip-8 Screen dimensions
-#define SCREEN_WIDTH 64
-#define SCREEN_HEIGHT 32
-#define OFFSET 12
-
-//Window dimensions
-#define WINDOW_WIDTH SCREEN_WIDTH * OFFSET
-#define WINDOW_HEIGHT SCREEN_HEIGHT * OFFSET
-
-
-
-
-unsigned char ScreenGraphics[SCREEN_WIDTH][SCREEN_WIDTH][3]; //For RGB
-
-Entu entuchip;
-
-
-
 /*
 TASKS
 -----
-Implement some form of fps control
-Refactor code
-Key input doesn't seem to work. Fix it
-Use function prototypes in source.cpp
-chip8 display and key functions need to be implemented
-Load ROM function needs to be implemented
-The rom to be loaded should be selected by File -> Load ROM in the GUI
 Add a program icon
+Extensive testing!
 
 STATUS
 ------
-Program working! The output is too fast. 
+Program working!
 */
-
 
 /*
 This is my attempt at writing a Chip-8 Emulator
@@ -59,36 +35,34 @@ A Stack is needed to handle jumps. This stack has 16 levels
 A Hexbased keypad
 */
 
+//Original Chip-8 Screen dimensions
+#define SCREEN_WIDTH 64
+#define SCREEN_HEIGHT 32
+#define MULTIPLIER 12
+
+//Display Window dimensions
+#define WINDOW_WIDTH SCREEN_WIDTH * MULTIPLIER
+#define WINDOW_HEIGHT SCREEN_HEIGHT * MULTIPLIER
+#define FPS 1000
+
+Entu entuchip;
 
 
-//Func
+//Function Prototypes
 void display();
-void reshape(int w, int h);
-void keyboardPressed(unsigned char key, int x, int y);
-void keyboardUnpressed(unsigned char key, int x, int y);
+void reshape(int, int);
+void timer(int);
+void keyboardPressed(unsigned char, int, int);
+void keyboardUnpressed(unsigned char, int, int);
 
-//Graphics
-void drawScreenPixel(int x, int y);
-
-//Method 2
-void createTextures();
-void updateTextures(const Entu entu);
-
-
-
-
+//Screen Graphics Generation
+void intro();
+void drawScreenPixel(int, int);
+void updateQuads(Entu);
 
 
 int main(int argc, char** argv) {
-	cout << "This is Entu Chip!" << endl;
-
-	//Debug Code
-	string rom_name = "C:\\Users\\santh\\source\\repos\\EntuChip\\x64\\Debug\\invaders.c8";
-
-
-	if (!entuchip.load(rom_name))
-		return 1;
-
+	intro();
 
 	//Display related code
 	glutInit(&argc, argv);
@@ -98,44 +72,17 @@ int main(int argc, char** argv) {
 	glutCreateWindow("Entu Chip by Santhosh C P");
 
 	glutDisplayFunc(display);
-	glutIdleFunc(display);
+	//glutIdleFunc(display);
 	glutReshapeFunc(reshape);
+	glutTimerFunc(0, timer, 0);
 	glutKeyboardFunc(keyboardPressed);
-	glutKeyboardFunc(keyboardUnpressed);
+	glutKeyboardUpFunc(keyboardUnpressed);
 
 	glutMainLoop();
-	
+
 	return 0;
 }
 
-
-void drawScreenPixel(int x, int y) {
-	//Converting to GLfloat values
-	GLfloat X = x  + 0.0f;
-	GLfloat Y = y  + 0.0f;
-
-	glBegin(GL_QUADS);
-	glVertex3f(X, Y, 0);
-	glVertex3f(X, Y + 1, 0);
-	glVertex3f(X + 1, Y + 1, 0);
-	glVertex3f(X + 1, Y, 0);
-}
-
-void updateQuads(const Entu entu) {
-
-	for (int y = 0; y < SCREEN_HEIGHT; y++) {
-		for (int x = 0; x < SCREEN_WIDTH; x++) {
-			if (entu.Graphics[(y * 64) + x] == 0) {
-				glColor3f(0.0f, 0.0f, 0.0f);
-			}
-			else {
-				glColor3f(1.0f, 1.0f, 1.0f);
-			}
-
-			drawScreenPixel(x, y);
-		}
-	}
-}
 
 void display() {
 	entuchip.cycle();
@@ -143,8 +90,6 @@ void display() {
 	if (entuchip.drawFlag) {
 		glClear(GL_COLOR_BUFFER_BIT); //Clears the color buffer(background)
 
-
-		//updateTextures(entuchip);
 		updateQuads(entuchip);
 
 		glutSwapBuffers();
@@ -157,11 +102,16 @@ void reshape(int w, int h) {
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluOrtho2D(0, SCREEN_WIDTH, SCREEN_HEIGHT,0);
+	gluOrtho2D(0, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
 	glMatrixMode(GL_MODELVIEW);
+
 	glViewport(0, 0, w, h);
 }
 
+void timer(int) {
+	glutPostRedisplay();
+	glutTimerFunc(1000 / FPS, timer, 0);
+}
 
 void keyboardPressed(unsigned char key, int x, int y) {
 	// We will be using the first 4 keys on the 4 rows of the keyboard
@@ -250,73 +200,50 @@ void keyboardUnpressed(unsigned char key, int x, int y) {
 }
 
 
-//Not needed. Delete once the output is proper
-void createTextures() {
+// Screen Graphics Generation
+void drawScreenPixel(int x, int y) {
+	//Converting to GLfloat values
+	GLfloat X = x + 0.0f;
+	GLfloat Y = y + 0.0f;
 
-	//Clear the screen
-	for (int i = 0; i < SCREEN_HEIGHT; i++) {
-		for (int j = 0; j < SCREEN_WIDTH; j++) {
-			ScreenGraphics[i][j][0] = 0;
-			ScreenGraphics[i][j][1] = 0;
-			ScreenGraphics[i][j][2] = 0;
-		}
-	}
-
-	//Creating a texture
-	glTexImage2D(GL_TEXTURE_2D, 0, 3, SCREEN_WIDTH, SCREEN_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*)ScreenGraphics);
-
-	//Setting it up
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-
-	//Enabling the texture
-	glEnable(GL_TEXTURE_2D);
+	glBegin(GL_QUADS);
+	glVertex3f(X, Y, 0);
+	glVertex3f(X, Y + 1, 0);
+	glVertex3f(X + 1, Y + 1, 0);
+	glVertex3f(X + 1, Y, 0);
 }
-void updateTextures(const Entu entu) {
-	int pixel;
 
-	//Updating the screen
-	for (int i = 0; i < SCREEN_HEIGHT; i++) {
-		for (int j = 0; j < SCREEN_WIDTH; j++) {
-			pixel = i * 64 + j;
+void updateQuads(const Entu entu) {
 
-			if (entu.Graphics[pixel] == 0) {
-				ScreenGraphics[i][j][0] = 0;
-				ScreenGraphics[i][j][1] = 0;
-				ScreenGraphics[i][j][2] = 0;
+	for (int y = 0; y < SCREEN_HEIGHT; y++) {
+		for (int x = 0; x < SCREEN_WIDTH; x++) {
+			if (entu.Graphics[(y * 64) + x] == 0) {
+				glColor3f(0.0f, 0.0f, 0.0f);
 			}
 			else {
-				ScreenGraphics[i][j][0] = 255;
-				ScreenGraphics[i][j][1] = 255;
-				ScreenGraphics[i][j][2] = 255;
+				glColor3f(1.0f, 1.0f, 1.0f);
 			}
+
+			drawScreenPixel(x, y);
+		}
+	}
+}
+
+void intro() {
+	string ROM;
+
+	cout << "Entu Chip by Santhosh C P" << endl;
+	cout << "Enter ROM filename (if it is in the same directory) or its absolute path\n";
+
+	while (true) {
+		cin >> ROM;
+		if (filesystem::exists(ROM)) {
+			break;
+		}
+		else {
+			cout << "File does not exist. Please recheck the path/filename entered\n";
 		}
 	}
 
-	//Updating the textures
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*)ScreenGraphics);
-
-
-	//Why?
-	glBegin(GL_QUADS);
-
-	glTexCoord2d(0.0, 0.0);
-	glVertex2d(0.0, 0.0);
-
-	glTexCoord2d(1.0, 0.0);
-	glVertex2d(WINDOW_WIDTH, 0.0);
-
-	glTexCoord2d(1.0, 1.0);
-	glVertex2d(WINDOW_WIDTH, WINDOW_HEIGHT);
-
-	glTexCoord2d(0.0, 1.0);
-	glVertex2d(0.0, WINDOW_HEIGHT);
-
-	glEnd();
+	entuchip.load(ROM);
 }
-
-
-
-

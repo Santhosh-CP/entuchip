@@ -1,17 +1,6 @@
 #include "entu.h"
 
 Entu::Entu() {
-	// We aren't doing anything using the constructor
-}
-
-Entu::~Entu() {
-	// We aren't doing anything using the destructor
-}
-
-
-void Entu::initialize() {
-
-
 	//resetting the registers
 	PC = 0x200; //PC starts at 0x200
 	Opcode = 0;
@@ -37,6 +26,17 @@ void Entu::initialize() {
 
 	//Clear the screen once the initialisation is complete
 	drawFlag = true;
+}
+
+Entu::~Entu() {
+	// We aren't doing anything using the destructor
+}
+
+
+void Entu::initialize() {
+
+
+
 }
 
 bool Entu::load(string filename) {
@@ -70,7 +70,7 @@ bool Entu::load(string filename) {
 		//Rom can be loaded
 
 		for (int i = 0; i < romSize; i++) {
-			Memory[offset + i] = (unsigned char)romData[i];
+			Memory[offset + i] = romData[i];
 		}
 	}
 	else {
@@ -87,13 +87,6 @@ bool Entu::load(string filename) {
 void Entu::cycle() {
 	//Obtaining the opcode
 	Opcode = getOpcode(Memory[PC], Memory[PC + 1]);
-
-
-	//Debug Test Code
-	//Opcode = 0xFD1E;
-	//unsigned short test =  0xFD1E & 0xF000;
-	//cout << test << endl;
-
 
 	//Decoding the opcode
 	switch (Opcode & 0xF000) {
