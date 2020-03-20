@@ -106,7 +106,7 @@ void Entu::cycle() {
 		So when we perform the Bitwise AND operation on the Opcode, we eliminate the last 12 bits and keep only the first 4 bits
 		The comparison is done based on the first 4 bits
 		*/
-		//verified
+
 	case 0x0000: {
 		unsigned short last;
 
@@ -131,15 +131,13 @@ void Entu::cycle() {
 		break;
 	}
 
-
-			   //verified
 	case 0x1000: {
 		//1nnn - JP addr
 		//Jump to location nnn.
 		PC = Opcode & 0x0FFF;
 		break;
 	}
-			   //verified
+
 	case 0x2000: {
 		//2nnn - CALL addr
 		//Call subroutine at nnn.
@@ -148,7 +146,7 @@ void Entu::cycle() {
 		PC = Opcode & 0x0FFF;
 		break;
 	}
-			   //verified
+
 	case 0x3000: {
 		//3xkk - SE Vx, byte
 		//Skip next instruction if Vx = kk.
@@ -161,7 +159,7 @@ void Entu::cycle() {
 		PC = PC + 2;
 		break;
 	}
-			   //verified
+
 	case 0x4000: {
 		//4xkk - SNE Vx, byte
 		//Skip next instruction if Vx != kk.
@@ -174,7 +172,7 @@ void Entu::cycle() {
 		PC = PC + 2;
 		break;
 	}
-			   //verified
+
 	case 0x5000: {
 		//5xy0 - SE Vx, Vy
 		//Skip next instruction if Vx = Vy.
@@ -187,7 +185,7 @@ void Entu::cycle() {
 		PC = PC + 2;
 		break;
 	}
-			   //verified
+
 	case 0x6000: {
 		//6xkk - LD Vx, byte
 		//Set Vx = kk.
@@ -198,7 +196,7 @@ void Entu::cycle() {
 		PC = PC + 2;
 		break;
 	}
-			   //verified
+
 	case 0x7000: {
 		//7xkk - ADD Vx, byte
 		//Set Vx = Vx + kk.
@@ -209,7 +207,7 @@ void Entu::cycle() {
 		PC = PC + 2;
 		break;
 	}
-			   //verified
+
 	case 0x8000: {
 		//There are multiple opcodes which start with 8
 		//They are differentiated based on the last 4 bits
@@ -330,7 +328,7 @@ void Entu::cycle() {
 		PC = PC + 2;
 		break;
 	}
-			   //verified
+
 	case 0x9000: {
 		//9xy0 - SNE Vx, Vy
 		//Skip next instruction if Vx != Vy.
@@ -343,7 +341,7 @@ void Entu::cycle() {
 		PC = PC + 2;
 		break;
 	}
-			   //verified
+
 	case 0xA000: {
 		//Annn - LD I, addr
 		//Set I = nnn.
@@ -351,14 +349,14 @@ void Entu::cycle() {
 		PC = PC + 2;
 		break;
 	}
-			   //verified
+
 	case 0xB000: {
 		//Bnnn - JP V0, addr
 		//Jump to location nnn + V0.
 		PC = (Opcode & 0x0FFF) + v[0];
 		break;
 	}
-			   //verified
+
 	case 0xC000: {
 		//Cxkk - RND Vx, byte
 		//Set Vx = random byte AND kk.
@@ -373,7 +371,7 @@ void Entu::cycle() {
 		PC = PC + 2;
 		break;
 	}
-			   //verified
+
 	case 0xD000: {
 		//Dxyn - DRW Vx, Vy, nibble
 		//Display n - byte sprite starting at memory location I at(Vx, Vy), set VF = collision.
@@ -381,21 +379,21 @@ void Entu::cycle() {
 		unsigned short height;
 		unsigned char pixel;
 
-		x = getX();
-		y = getY();
+		x = v[getX()];
+		y = v[getY()];
 		height = Opcode & 0x000F;
 		v[0xF] = 0; //0xF = Vf
-		for (int yaxis = 0; yaxis < height; yaxis++) {
-			pixel = Memory[I + yaxis];
-			for (int xaxis = 0; xaxis < 8; xaxis++) {
-				//xaxis < 8 because a byte has 8 bits
+		for (int yline = 0; yline < height; yline++) {
+			pixel = Memory[I + yline];
+			for (int xline = 0; xline < 8; xline++) {
+				//xline < 8 because a byte has 8 bits
 
-				if ((pixel & (0x80 >> xaxis)) != 0) {
-					if (Graphics[(x + xaxis + (y + yaxis) * 64)] == 1) {
+				if ((pixel & (0x80 >> xline)) != 0) {
+					if (Graphics[x + xline + ((y + yline) * 64)] == 1) {
 						//Checking if the current pixel is set or not. If it is set, the collision is registered to VF
 						v[0xF] = 1;
 					}
-					Graphics[(x + xaxis + (y + yaxis * 64))] = Graphics[(x + xaxis + (y * yaxis * 64))] ^ 1;
+					Graphics[x + xline + ((y + yline) * 64)] ^= 1;
 				}
 			}
 		}
@@ -404,7 +402,7 @@ void Entu::cycle() {
 
 		break;
 	}
-			   //verified
+
 	case 0xE000: {
 		unsigned short last;
 		unsigned char x;
@@ -438,7 +436,7 @@ void Entu::cycle() {
 		}
 		break;
 	}
-			   //verified
+
 	case 0xF000: {
 		unsigned short last;
 		unsigned char x;

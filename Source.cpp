@@ -26,25 +26,25 @@ Entu entuchip;
 /*
 TASKS
 -----
+Implement some form of fps control
 Refactor code
+Key input doesn't seem to work. Fix it
 Use function prototypes in source.cpp
 chip8 display and key functions need to be implemented
 Load ROM function needs to be implemented
 The rom to be loaded should be selected by File -> Load ROM in the GUI
-
+Add a program icon
 
 STATUS
 ------
-freeglut libraries have been added to the project. The project complied successfully!
+Program working! The output is too fast. 
 */
 
 
 /*
 This is my attempt at writing a Chip-8 Emulator
 
-Chip 8 Information:-
-
-Basic Details:-
+Chip-8 Basic Details:-
 35 opcodes
 opcode = 2 bytes long
 4K Memory
@@ -103,12 +103,8 @@ int main(int argc, char** argv) {
 	glutKeyboardFunc(keyboardPressed);
 	glutKeyboardFunc(keyboardUnpressed);
 
-
-	
-	//createTextures();
 	glutMainLoop();
 	
-
 	return 0;
 }
 
