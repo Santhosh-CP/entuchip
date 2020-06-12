@@ -5,12 +5,6 @@
 #include<iostream>
 #include<fstream>
 
-/*
-Task to be implemented
-
-
-*/
-
 using namespace std;
 
 class Entu {
@@ -58,15 +52,10 @@ private:
 	};
 
 	//functions
-	void initialize(); // Initializes the System
-
 	unsigned short getOpcode(unsigned char, unsigned char);
 	unsigned char getX();
 	unsigned char getY();
 	unsigned char getKK();
-
-
 };
-
 
 #endif

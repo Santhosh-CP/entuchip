@@ -32,16 +32,7 @@ Entu::~Entu() {
 	// We aren't doing anything using the destructor
 }
 
-
-void Entu::initialize() {
-
-
-
-}
-
 bool Entu::load(string filename) {
-	initialize();
-
 	const char* _FileName = filename.c_str();
 	FILE* file = fopen(_FileName, "rb");
 	if (file == NULL) {
@@ -568,9 +559,10 @@ void Entu::cycle() {
 		SoundTimer--;
 	}
 }
+
 unsigned char Entu::getX() {
 	/*
-	In all Chip 8 Opcode, if X exists, it is in bits 5-8
+	In all Chip 8 Opcodes, if X exists, it is in bits 5-8
 	That is, 0x0X00
 	This function obtains the X value and returns it.
 	*/
@@ -581,9 +573,10 @@ unsigned char Entu::getX() {
 	ret_x = x;
 	return ret_x;
 }
+
 unsigned char Entu::getY() {
 	/*
-	In all Chip 8 Opcode, if X exists, it is in bits 9-12
+	In all Chip 8 Opcodes, if X exists, it is in bits 9-12
 	That is, 0x00Y0
 	This function obtains the Y value and returns it.
 	*/
@@ -595,6 +588,7 @@ unsigned char Entu::getY() {
 	ret_y = y;
 	return ret_y;
 }
+
 unsigned char Entu::getKK() {
 	/*
 	In all Chip 8 Opcode, if KK exists, it is in the second byte
@@ -608,6 +602,7 @@ unsigned char Entu::getKK() {
 	ret_kk = kk;
 	return ret_kk;
 }
+
 unsigned short Entu::getOpcode(unsigned char a, unsigned char b) {
 	/*
 	Memory in Chip 8 is one byte

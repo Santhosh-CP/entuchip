@@ -7,17 +7,7 @@
 using namespace std;
 
 /*
-TASKS
------
-Add a program icon
-Extensive testing!
-
-STATUS
-------
-Program working!
-*/
-
-/*
+				ENTUCHIP
 This is my attempt at writing a Chip-8 Emulator
 
 Chip-8 Basic Details:-
@@ -32,7 +22,21 @@ Display screen size is 64 x 32 (2048 pixels)
 Two timers - Delay Timer & Sound Timer
 These two timers count at 80Hz. When they are set to a value above 0, they count down to zero
 A Stack is needed to handle jumps. This stack has 16 levels
-A Hexbased keypad
+A Hex-based keypad
+*/
+
+/*
+STATUS
+------
+Program working!
+
+
+POSSIBLE FUTURE IMPROVEMENTS
+----------------------------
+Show a keymap on the console (Which key on the keyboard corresponds to which C8 key)
+Add a program icon
+Extensive testing!
+Implement beep based sound?
 */
 
 //Original Chip-8 Screen dimensions
@@ -56,23 +60,22 @@ void keyboardPressed(unsigned char, int, int);
 void keyboardUnpressed(unsigned char, int, int);
 
 //Screen Graphics Generation
-void intro();
+void loadGame();
 void drawScreenPixel(int, int);
 void updateQuads(Entu);
 
 
 int main(int argc, char** argv) {
-	intro();
+	loadGame();
 
 	//Display related code
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 	glutInitWindowPosition(512, 512);
-	glutCreateWindow("Entu Chip by Santhosh C P");
+	glutCreateWindow("EntuChip by Santhosh C P");
 
 	glutDisplayFunc(display);
-	//glutIdleFunc(display);
 	glutReshapeFunc(reshape);
 	glutTimerFunc(0, timer, 0);
 	glutKeyboardFunc(keyboardPressed);
@@ -229,7 +232,7 @@ void updateQuads(const Entu entu) {
 	}
 }
 
-void intro() {
+void loadGame() {
 	string ROM;
 
 	cout << "Entu Chip by Santhosh C P" << endl;
