@@ -23,11 +23,11 @@
 
 <div>
   <p><b><a href="http://freeglut.sourceforge.net/">The FreeGLUT Project</a></b></p>
-  <p>This project makes extensive use of the FreeGLUT library</p>
+  <p>Entuchip makes extensive use of the FreeGLUT library</p>
 </div>
 <div>
   <p><b><a href="https://www.transmissionzero.co.uk/software/freeglut-devel/">Martin Payne's Windows binaries (MSVC)</a></b></p>
-  <p>This project uses the compiled Windows binaries of the FreeGLUT Library. These binaries are included in the Dependencies folder of the project</p>
+  <p>Entuchip uses the compiled Windows binaries of the FreeGLUT Library. These binaries are included in the Dependencies folder of the project</p>
 </div>
 <div>
 <p><b><a href="http://www.multigesture.net/articles/how-to-write-an-emulator-chip-8-interpreter/">How to write an emulator (CHIP-8 Interpreter)</a></b></p>
